@@ -32,9 +32,10 @@ public class GlobalExceptionHandler {
     // Fallback – everything else
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGeneric(Exception ex) {
+        ex.printStackTrace(); // Log the full stack trace
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error(500, "Something went wrong"));
+                .body(error(500, "Something went wrong: " + ex.getMessage()));
     }
 
     private Map<String, Object> error(int status, String message) {

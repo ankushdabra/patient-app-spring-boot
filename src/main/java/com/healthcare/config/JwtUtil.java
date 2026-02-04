@@ -3,6 +3,7 @@ package com.healthcare.config;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -10,9 +11,8 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // MUST be at least 32 characters
-    private static final String SECRET =
-            "healthcare-jwt-secret-key-256-bit-minimum!!";
+    @Value("${jwt.secret}")
+    private String secret;
 
     private static final long EXPIRY = 86400000; // 1 day
 
@@ -23,27 +23,35 @@ public class JwtUtil {
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRY))
                 .signWith(
-                        Keys.hmacShaKeyFor(SECRET.getBytes()),
+                        Keys.hmacShaKeyFor(secret.getBytes()),
                         SignatureAlgorithm.HS256
                 )
                 .compact();
     }
 
     public String getEmail(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(SECRET.getBytes()))
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public String getRole(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(SECRET.getBytes()))
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .get("role", String.class);
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("role", String.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
