@@ -1,16 +1,21 @@
 package com.healthcare.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -24,9 +29,9 @@ public class DoctorEntity {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private UserEntity userEntity;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @Column(name = "name", length = 100)
     private String name;
@@ -54,5 +59,13 @@ public class DoctorEntity {
 
     @Column(name = "profile_image", length = 255)
     private String profileImage;
+
+    @OneToMany(mappedBy = "doctor", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<AppointmentEntity> appointments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "doctor", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<DoctorAvailabilityEntity> availability = new ArrayList<>();
 
 }

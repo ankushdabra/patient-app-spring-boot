@@ -18,7 +18,6 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final DoctorAvailabilityRepository availabilityRepository;
 
-
     public DoctorService(DoctorRepository doctorRepository, DoctorAvailabilityRepository availabilityRepository) {
         this.doctorRepository = doctorRepository;
         this.availabilityRepository = availabilityRepository;
@@ -29,7 +28,7 @@ public class DoctorService {
                 .stream()
                 .map(doctor -> DoctorResponseDto.builder()
                         .id(doctor.getId())
-                        .name(doctor.getUserEntity().getName())
+                        .name(doctor.getUser().getName())
                         .specialization(doctor.getSpecialization())
                         .experience(doctor.getExperience())
                         .consultationFee(doctor.getConsultationFee())
@@ -38,24 +37,19 @@ public class DoctorService {
     }
 
     public DoctorDetailResponseDto getDoctorDetail(UUID doctorId) {
-
         DoctorEntity doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
-        List<DoctorAvailabilityEntity> availabilityEntities =
-                availabilityRepository.findByDoctorId(doctorId);
-
-        List<DoctorAvailabilityDto> availabilityDtos =
-                availabilityEntities.stream().map(this::mapAvailability)
-                        .toList();
-
+        List<DoctorAvailabilityEntity> availabilityEntities = availabilityRepository.findByDoctorId(doctorId);
+        List<DoctorAvailabilityDto> availabilityDtos = availabilityEntities.stream()
+                .map(this::mapAvailability)
+                .toList();
         return getDoctorDetailResponseDto(doctor, availabilityDtos);
     }
 
     private DoctorDetailResponseDto getDoctorDetailResponseDto(DoctorEntity doctor, List<DoctorAvailabilityDto> availabilityDtos) {
         DoctorDetailResponseDto response = new DoctorDetailResponseDto();
         response.setId(doctor.getId());
-        response.setName(doctor.getUserEntity().getName());
+        response.setName(doctor.getUser().getName());
         response.setSpecialization(doctor.getSpecialization());
         response.setQualification(doctor.getQualification());
         response.setExperience(doctor.getExperience());

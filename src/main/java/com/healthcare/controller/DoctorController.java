@@ -31,10 +31,7 @@ public class DoctorController {
 
     @PreAuthorize("hasRole('PATIENT')")
     @GetMapping("/{doctorId}")
-    public ResponseEntity<DoctorDetailResponseDto> getDoctorDetail(
-            @PathVariable UUID doctorId) {
-        return ResponseEntity.ok(
-                doctorService.getDoctorDetail(doctorId)
-        );
+    public ResponseEntity<DoctorDetailResponseDto> getDoctorDetail(@PathVariable UUID doctorId) {
+        return ResponseEntity.ok(doctorService.getDoctorDetail(doctorId));
     }
 }
