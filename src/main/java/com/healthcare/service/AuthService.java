@@ -13,6 +13,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class AuthService {
 
@@ -31,6 +34,8 @@ public class AuthService {
 
     public String login(LoginRequestDto request) {
         logger.info("Attempting login for user: {}", request.getEmail());
+        logger.info("Received password length: {}", request.getPassword() != null ? request.getPassword().length() : "null");
+
         UserEntity userEntity = userRepository.findByEmail(request.getEmail()).orElse(null);
 
         if (userEntity == null || !passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
@@ -47,7 +52,7 @@ public class AuthService {
         }
     }
 
-    public UserEntity registerUser(UserEntity user, @Valid RegistrationRequestDto request) {
+    public Map<String, Object> registerUser(UserEntity user, @Valid RegistrationRequestDto request) {
         logger.info("Registering new user: {}", user.getEmail());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         UserEntity savedUser = userRepository.save(user);
@@ -56,6 +61,12 @@ public class AuthService {
             logger.info("Creating patient profile for user ID: {}", savedUser.getId());
             patientService.createPatientFromUser(savedUser, request);
         }
-        return savedUser;
+
+        String token = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole().name());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("user", savedUser);
+        response.put("token", token);
+        return response;
     }
 }
