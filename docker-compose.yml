@@ -9,7 +9,7 @@ services:
 #      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/healthcare_db
 #      - SPRING_DATASOURCE_USERNAME=postgres
 #      - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://containers-us-east-123.railway.app:5432/railway
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://roundhouse.proxy.rlwy.net:5432/railway
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=JJJLpikiApddeCJGTnfnMVwslBTxeluo
       - JWT_SECRET=healthcare-jwt-secret-key-256-bit-minimum!!
