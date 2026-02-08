@@ -1,5 +1,6 @@
 package com.healthcare.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.healthcare.enums.AppointmentStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,6 +31,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class AppointmentEntity {
 
     @Id
@@ -58,9 +60,4 @@ public class AppointmentEntity {
     @Column(name = "created_at")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    @OneToOne(mappedBy = "appointment", fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private PrescriptionEntity prescription;
-
 }

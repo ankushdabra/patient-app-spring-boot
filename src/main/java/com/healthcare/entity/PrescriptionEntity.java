@@ -24,16 +24,14 @@ public class PrescriptionEntity {
     @UuidGenerator
     private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "patient_id", nullable = false)
-    private PatientEntity patient;
+    @Column(name = "patient_id")
+    private UUID patientId;
+
+    @Column(name = "doctor_id")
+    private UUID doctorId;
 
     @ManyToOne
-    @JoinColumn(name = "doctor_id", nullable = false)
-    private UserEntity doctor;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "appointment_id", referencedColumnName = "id")
+    @JoinColumn(name = "appointment_id", nullable = false)
     private AppointmentEntity appointment;
 
     @Column(columnDefinition = "TEXT")
@@ -42,11 +40,11 @@ public class PrescriptionEntity {
     @Column(columnDefinition = "TEXT")
     private String instructions;
 
-    @Column(name = "prescription_date")
-    private LocalDate prescriptionDate;
-
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    @Column(name = "prescription_date")
+    private LocalDate prescriptionDate;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

@@ -21,7 +21,8 @@ public class DoctorService {
     private final DoctorAvailabilityRepository availabilityRepository;
     private final AvailabilityMapper availabilityMapper;
 
-    public DoctorService(DoctorRepository doctorRepository, DoctorAvailabilityRepository availabilityRepository, AvailabilityMapper availabilityMapper) {
+    public DoctorService(DoctorRepository doctorRepository, DoctorAvailabilityRepository availabilityRepository,
+                         AvailabilityMapper availabilityMapper) {
         this.doctorRepository = doctorRepository;
         this.availabilityRepository = availabilityRepository;
         this.availabilityMapper = availabilityMapper;

@@ -17,6 +17,9 @@ public class PrescriptionRequestDto {
     @NotNull(message = "Patient ID is required")
     private UUID patientId;
 
+    @NotNull(message = "Doctor ID is required")
+    private UUID doctorId;
+
     private UUID appointmentId;
 
     @NotBlank(message = "Medications cannot be empty")

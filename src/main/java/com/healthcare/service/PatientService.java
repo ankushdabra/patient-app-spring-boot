@@ -7,6 +7,9 @@ import com.healthcare.repository.PatientRepository;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+import java.util.UUID;
+
 @Service
 public class PatientService {
 
@@ -23,4 +26,9 @@ public class PatientService {
                 .bloodGroup(request.getBloodGroup())
                 .build());
     }
+
+    public Optional<PatientEntity> getPatientByUserId(UUID userId) {
+        return patientRepository.findByUserId(userId);
+    }
+
 }

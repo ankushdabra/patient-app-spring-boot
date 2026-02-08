@@ -2,7 +2,7 @@ package com.healthcare.controller;
 
 import com.healthcare.dto.ApiResponse;
 import com.healthcare.dto.PrescriptionRequestDto;
-import com.healthcare.dto.PrescriptionResponseDto;
+import com.healthcare.entity.PrescriptionEntity;
 import com.healthcare.service.PrescriptionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -31,7 +31,8 @@ public class PrescriptionController {
 
     @GetMapping
     @PreAuthorize("hasRole('PATIENT')")
-    public ResponseEntity<List<PrescriptionResponseDto>> getMyPrescriptions() {
+    public ResponseEntity<List<PrescriptionEntity>> getMyPrescriptions() {
         return ResponseEntity.ok(prescriptionService.getMyPrescriptions());
     }
+
 }

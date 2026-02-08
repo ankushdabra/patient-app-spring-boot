@@ -1,6 +1,7 @@
 package com.healthcare.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -27,6 +28,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "doctors")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class DoctorEntity {
 
     @Id
@@ -35,8 +37,8 @@ public class DoctorEntity {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
     private UserEntity user;
 
     @Column(name = "name", length = 100)
