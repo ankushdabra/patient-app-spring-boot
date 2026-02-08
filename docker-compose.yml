@@ -9,9 +9,9 @@ services:
 #      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/healthcare_db
 #      - SPRING_DATASOURCE_USERNAME=postgres
 #      - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://roundhouse.proxy.rlwy.net:5432/railway
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=JJJLpikiApddeCJGTnfnMVwslBTxeluo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://${PGUSER}:${POSTGRES_PASSWORD}@${RAILWAY_TCP_PROXY_DOMAIN}:${RAILWAY_TCP_PROXY_PORT}/${PGDATABASE}
+#      - SPRING_DATASOURCE_USERNAME=postgres
+#      - SPRING_DATASOURCE_PASSWORD=JJJLpikiApddeCJGTnfnMVwslBTxeluo
       - JWT_SECRET=healthcare-jwt-secret-key-256-bit-minimum!!
     extra_hosts:
       - "host.docker.internal:host-gateway"
