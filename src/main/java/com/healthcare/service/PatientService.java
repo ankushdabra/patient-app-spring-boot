@@ -17,11 +17,10 @@ public class PatientService {
     }
 
     public void createPatientFromUser(UserEntity user, @Valid RegistrationRequestDto request) {
-        PatientEntity patient = new PatientEntity();
-        patient.setUser(user);
-        patient.setAge(request.getAge());
-        patient.setGender(request.getGender());
-        patient.setBloodGroup(request.getBloodGroup());
-        patientRepository.save(patient);
+        patientRepository.save(PatientEntity.builder().user(user)
+                .age(request.getAge())
+                .gender(request.getGender())
+                .bloodGroup(request.getBloodGroup())
+                .build());
     }
 }

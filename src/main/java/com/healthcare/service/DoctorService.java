@@ -47,26 +47,24 @@ public class DoctorService {
     }
 
     private DoctorDetailResponseDto getDoctorDetailResponseDto(DoctorEntity doctor, List<DoctorAvailabilityDto> availabilityDtos) {
-        DoctorDetailResponseDto response = new DoctorDetailResponseDto();
-        response.setId(doctor.getId());
-        response.setName(doctor.getUser().getName());
-        response.setSpecialization(doctor.getSpecialization());
-        response.setQualification(doctor.getQualification());
-        response.setExperience(doctor.getExperience());
-        response.setRating(doctor.getRating());
-        response.setConsultationFee(doctor.getConsultationFee());
-        response.setAbout(doctor.getAbout());
-        response.setClinicAddress(doctor.getClinicAddress());
-        response.setProfileImage(doctor.getProfileImage());
-        response.setAvailability(availabilityDtos);
-        return response;
+        return DoctorDetailResponseDto.builder().id(doctor.getId())
+                .name(doctor.getUser().getName())
+                .specialization(doctor.getSpecialization())
+                .qualification(doctor.getQualification())
+                .experience(doctor.getExperience())
+                .rating(doctor.getRating())
+                .consultationFee(doctor.getConsultationFee())
+                .about(doctor.getAbout())
+                .clinicAddress(doctor.getClinicAddress())
+                .profileImage(doctor.getProfileImage())
+                .availability(availabilityDtos)
+                .build();
     }
 
     private DoctorAvailabilityDto mapAvailability(DoctorAvailabilityEntity entity) {
-        DoctorAvailabilityDto dto = new DoctorAvailabilityDto();
-        dto.setDay(entity.getDay().toString());
-        dto.setStartTime(entity.getStartTime().toString());
-        dto.setEndTime(entity.getEndTime().toString());
-        return dto;
+        return DoctorAvailabilityDto.builder().day(String.valueOf(entity.getDay()))
+                .startTime(String.valueOf(entity.getStartTime()))
+                .endTime(String.valueOf(entity.getEndTime()))
+                .build();
     }
 }

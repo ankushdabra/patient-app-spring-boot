@@ -13,6 +13,7 @@ import com.healthcare.repository.PatientRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,6 +67,20 @@ public class AppointmentService {
         return repository.findByPatientId(patient.getId()).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
+    }
+
+    public AppointmentResponseDto getAppointmentById(UUID appointmentId) {
+        UserEntity user = userService.getCurrentUser();
+
+        AppointmentEntity appointment = repository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        // Security check: Ensure the appointment belongs to the current user
+        if (!appointment.getPatient().getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Access denied: You can only view your own appointments");
+        }
+
+        return mapToDto(appointment);
     }
 
     private AppointmentResponseDto mapToDto(AppointmentEntity entity) {

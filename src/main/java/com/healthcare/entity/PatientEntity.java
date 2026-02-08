@@ -7,7 +7,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
@@ -15,6 +18,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "patients")
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class PatientEntity {
     @Id
     @GeneratedValue

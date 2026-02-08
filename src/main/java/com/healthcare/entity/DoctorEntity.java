@@ -10,7 +10,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
@@ -20,6 +23,9 @@ import java.util.UUID;
 
 @Data
 @Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "doctors")
 public class DoctorEntity {
 
@@ -62,10 +68,12 @@ public class DoctorEntity {
 
     @OneToMany(mappedBy = "doctor", fetch = FetchType.LAZY)
     @JsonIgnore
+    @Builder.Default
     private List<AppointmentEntity> appointments = new ArrayList<>();
 
     @OneToMany(mappedBy = "doctor", fetch = FetchType.LAZY)
     @JsonIgnore
+    @Builder.Default
     private List<DoctorAvailabilityEntity> availability = new ArrayList<>();
 
 }

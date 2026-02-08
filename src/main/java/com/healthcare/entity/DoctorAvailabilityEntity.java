@@ -11,8 +11,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalTime;
@@ -20,14 +22,15 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "doctor_availability")
-@Getter
-@Setter
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class DoctorAvailabilityEntity {
 
     @Id
-    @GeneratedValue(generator = "UUID")
+    @GeneratedValue
     @UuidGenerator
-
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
