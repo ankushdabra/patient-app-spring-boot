@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/prescriptions")
@@ -33,6 +34,12 @@ public class PrescriptionController {
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<List<PrescriptionEntity>> getMyPrescriptions() {
         return ResponseEntity.ok(prescriptionService.getMyPrescriptions());
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<PrescriptionEntity> getPrescriptionById(@PathVariable UUID id) {
+        return ResponseEntity.ok(prescriptionService.getPrescriptionById(id));
     }
 
 }

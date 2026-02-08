@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -38,8 +38,7 @@ public class PrescriptionService {
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
         PrescriptionEntity prescription = PrescriptionEntity.builder()
-                .doctorId(appointment.getDoctor().getId())
-                .patientId(appointment.getPatient().getId())
+                .patient(appointment.getPatient().getId())
                 .appointment(appointment)
                 .medications(request.getMedications())
                 .instructions(request.getInstructions())
@@ -54,8 +53,14 @@ public class PrescriptionService {
     @Transactional(readOnly = true)
     public List<PrescriptionEntity> getMyPrescriptions() {
         UserEntity currentUser = userService.getCurrentUser();
-        return prescriptionRepository.findByPatientId(patientService.getPatientByUserId(currentUser.getId())
+        return prescriptionRepository.findByPatient(patientService.getPatientByUserId(currentUser.getId())
                 .map(PatientEntity::getId)
                 .orElse(null));
+    }
+
+    @Transactional(readOnly = true)
+    public PrescriptionEntity getPrescriptionById(UUID prescriptionId) {
+        return prescriptionRepository.findById(prescriptionId)
+                .orElseThrow(() -> new RuntimeException("Prescription not found"));
     }
 }

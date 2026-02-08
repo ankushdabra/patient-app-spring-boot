@@ -25,10 +25,10 @@ public class PrescriptionEntity {
     private UUID id;
 
     @Column(name = "patient_id")
-    private UUID patientId;
+    private UUID patient;
 
     @Column(name = "doctor_id")
-    private UUID doctorId;
+    private UUID doctor;
 
     @ManyToOne
     @JoinColumn(name = "appointment_id", nullable = false)

@@ -38,10 +38,10 @@ public class AuthService {
 
         UserEntity userEntity = userRepository.findByEmail(request.getEmail()).orElse(null);
 
-       /* if (userEntity == null || !passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
+        if (userEntity == null || !passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
             logger.warn("Login failed: Invalid credentials for user {}", request.getEmail());
             throw new BadCredentialsException("Invalid email or password");
-        }*/
+        }
 
         try {
             logger.info("Login successful for user: {}", request.getEmail());
