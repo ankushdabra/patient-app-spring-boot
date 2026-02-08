@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -26,5 +27,5 @@ public class DoctorDetailResponseDto {
     private String clinicAddress;
     private String profileImage;
 
-    private List<DoctorAvailabilityDto> availability;
+    private Map<String, List<TimeSlotDto>> availability;
 }

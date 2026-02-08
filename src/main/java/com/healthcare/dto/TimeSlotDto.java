@@ -5,13 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DoctorAvailabilityDto {
-    private Map<String, List<TimeSlotDto>> availability;
+public class TimeSlotDto {
+    private String startTime;
+    private String endTime;
 }

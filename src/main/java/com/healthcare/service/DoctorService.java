@@ -1,15 +1,17 @@
 package com.healthcare.service;
 
-import com.healthcare.dto.DoctorAvailabilityDto;
 import com.healthcare.dto.DoctorDetailResponseDto;
 import com.healthcare.dto.DoctorResponseDto;
+import com.healthcare.dto.TimeSlotDto;
 import com.healthcare.entity.DoctorAvailabilityEntity;
 import com.healthcare.entity.DoctorEntity;
 import com.healthcare.repository.DoctorAvailabilityRepository;
 import com.healthcare.repository.DoctorRepository;
+import com.healthcare.util.AvailabilityMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -17,10 +19,12 @@ public class DoctorService {
 
     private final DoctorRepository doctorRepository;
     private final DoctorAvailabilityRepository availabilityRepository;
+    private final AvailabilityMapper availabilityMapper;
 
-    public DoctorService(DoctorRepository doctorRepository, DoctorAvailabilityRepository availabilityRepository) {
+    public DoctorService(DoctorRepository doctorRepository, DoctorAvailabilityRepository availabilityRepository, AvailabilityMapper availabilityMapper) {
         this.doctorRepository = doctorRepository;
         this.availabilityRepository = availabilityRepository;
+        this.availabilityMapper = availabilityMapper;
     }
 
     public List<DoctorResponseDto> getAllDoctors() {
@@ -42,14 +46,11 @@ public class DoctorService {
         DoctorEntity doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
         List<DoctorAvailabilityEntity> availabilityEntities = availabilityRepository.findByDoctorId(doctorId);
-        List<DoctorAvailabilityDto> availabilityDtos = availabilityEntities.stream()
-                .map(this::mapAvailability)
-                .toList();
-        return getDoctorDetailResponseDto(doctor, availabilityDtos);
-    }
 
-    private DoctorDetailResponseDto getDoctorDetailResponseDto(DoctorEntity doctor, List<DoctorAvailabilityDto> availabilityDtos) {
-        return DoctorDetailResponseDto.builder().id(doctor.getId())
+        Map<String, List<TimeSlotDto>> availabilityMap = availabilityMapper.map(availabilityEntities);
+
+        return DoctorDetailResponseDto.builder()
+                .id(doctor.getId())
                 .name(doctor.getUser().getName())
                 .specialization(doctor.getSpecialization())
                 .qualification(doctor.getQualification())
@@ -59,14 +60,7 @@ public class DoctorService {
                 .about(doctor.getAbout())
                 .clinicAddress(doctor.getClinicAddress())
                 .profileImage(doctor.getProfileImage())
-                .availability(availabilityDtos)
-                .build();
-    }
-
-    private DoctorAvailabilityDto mapAvailability(DoctorAvailabilityEntity entity) {
-        return DoctorAvailabilityDto.builder().day(String.valueOf(entity.getDay()))
-                .startTime(String.valueOf(entity.getStartTime()))
-                .endTime(String.valueOf(entity.getEndTime()))
+                .availability(availabilityMap)
                 .build();
     }
 }
