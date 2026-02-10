@@ -7,14 +7,16 @@ import com.healthcare.entity.UserEntity;
 import com.healthcare.enums.Role;
 import com.healthcare.repository.UserRepository;
 import jakarta.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -34,28 +36,40 @@ public class AuthService {
 
     public String login(LoginRequestDto request) {
         logger.info("Attempting login for user: {}", request.getEmail());
-        logger.info("Received password length: {}", request.getPassword() != null ? request.getPassword().length() : "null");
 
-        UserEntity userEntity = userRepository.findByEmail(request.getEmail()).orElse(null);
+        UserEntity userEntity = userRepository.findByEmail(request.getEmail())
+                .filter(user -> passwordEncoder.matches(request.getPassword(), user.getPassword()))
+                .orElseThrow(() -> {
+                    logger.warn("Login failed: Invalid credentials for user {}", request.getEmail());
+                    return new BadCredentialsException("Invalid email or password");
+                });
 
-        if (userEntity == null || !passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
-            logger.warn("Login failed: Invalid credentials for user {}", request.getEmail());
-            throw new BadCredentialsException("Invalid email or password");
-        }
-
-        try {
-            logger.info("Login successful for user: {}", request.getEmail());
-            return jwtUtil.generateToken(userEntity.getEmail(), userEntity.getRole().name());
-        } catch (Exception e) {
-            logger.error("Error generating token for user {}: {}", request.getEmail(), e.getMessage());
-            throw new RuntimeException("Error generating token: " + e.getMessage());
-        }
+        logger.info("Login successful for user: {}", request.getEmail());
+        return jwtUtil.generateToken(userEntity.getEmail(), userEntity.getRole().name());
     }
 
-    public Map<String, Object> registerUser(UserEntity user, @Valid RegistrationRequestDto request) {
-        logger.info("Registering new user: {}", user.getEmail());
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        UserEntity savedUser = userRepository.save(user);
+    @Transactional
+    public Map<String, Object> registerUser(@Valid RegistrationRequestDto request) {
+        Role patientRole = Optional.ofNullable(request.getRole())
+                .filter(StringUtils::isNotEmpty)
+                .map(String::toUpperCase)
+                .map(role -> {
+                    try {
+                        return Role.valueOf(role);
+                    } catch (IllegalArgumentException e) {
+                        throw new IllegalArgumentException("Invalid role");
+                    }
+                })
+                .orElse(Role.PATIENT);
+
+        UserEntity savedUser = userRepository.save(UserEntity.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(patientRole)
+                .build());
+
+        logger.info("Registering new user: {}", savedUser.getEmail());
 
         if (savedUser.getRole() == Role.PATIENT) {
             logger.info("Creating patient profile for user ID: {}", savedUser.getId());
@@ -64,9 +78,6 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole().name());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("user", savedUser);
-        response.put("token", token);
-        return response;
+        return Map.of("user", savedUser, "token", token);
     }
 }

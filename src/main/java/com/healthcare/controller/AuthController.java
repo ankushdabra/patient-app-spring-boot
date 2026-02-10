@@ -3,8 +3,6 @@ package com.healthcare.controller;
 import com.healthcare.dto.ApiResponse;
 import com.healthcare.dto.LoginRequestDto;
 import com.healthcare.dto.RegistrationRequestDto;
-import com.healthcare.entity.UserEntity;
-import com.healthcare.enums.Role;
 import com.healthcare.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -35,22 +33,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequestDto request) {
-        UserEntity user = new UserEntity();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
-
-        if (request.getRole() != null && !request.getRole().isEmpty()) {
-            try {
-                user.setRole(Role.valueOf(request.getRole().toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest().body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid role"));
-            }
-        } else {
-            user.setRole(Role.PATIENT);
-        }
-
-        Map<String, Object> response = authService.registerUser(user, request);
+        Map<String, Object> response = authService.registerUser(request);
         return ResponseEntity.ok(response);
     }
 
