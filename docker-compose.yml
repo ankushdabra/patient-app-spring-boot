@@ -9,7 +9,7 @@ services:
 #      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/healthcare_db
 #      - SPRING_DATASOURCE_USERNAME=postgres
 #      - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_DATASOURCE_URL=${DATABASE_URL}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://${RAILWAY_TCP_PROXY_DOMAIN}:${RAILWAY_TCP_PROXY_PORT}/${PGDATABASE}?sslmode=require
       - SPRING_DATASOURCE_USERNAME=${PGUSER}
       - SPRING_DATASOURCE_PASSWORD=${PGPASSWORD}
       - JWT_SECRET=healthcare-jwt-secret-key-256-bit-minimum!!
