@@ -1,9 +1,14 @@
 package com.healthcare.config.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +21,7 @@ import java.util.List;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
     private final JwtUtil jwtUtil;
 
     public JwtFilter(JwtUtil jwtUtil) {
@@ -32,14 +38,23 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            String email = jwtUtil.getEmail(token);
-            String role = jwtUtil.getRole(token);
+            try {
+                String email = jwtUtil.getEmail(token);
+                String role = jwtUtil.getRole(token);
 
-            if (email != null && role != null) {
-                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
-
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(email, null, List.of(authority));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                if (email != null && role != null) {
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(email, null, List.of(authority));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+            } catch (ExpiredJwtException e) {
+                logger.warn("JWT token is expired: {}", e.getMessage());
+            } catch (SignatureException e) {
+                logger.error("JWT signature does not match: {}", e.getMessage());
+            } catch (MalformedJwtException e) {
+                logger.error("JWT token is malformed: {}", e.getMessage());
+            } catch (Exception e) {
+                logger.error("Invalid JWT token: {}", e.getMessage());
             }
         }
         chain.doFilter(request, response);
