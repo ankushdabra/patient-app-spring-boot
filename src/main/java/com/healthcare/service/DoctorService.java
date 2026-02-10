@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -110,15 +111,21 @@ public class DoctorService {
 
         if (request.getAvailability() != null && !request.getAvailability().isEmpty()) {
             List<DoctorAvailabilityEntity> availabilityEntities = new ArrayList<>();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
             for (Map.Entry<String, List<TimeSlotDto>> entry : request.getAvailability().entrySet()) {
-                DayOfWeekEnum day = DayOfWeekEnum.valueOf(entry.getKey().toUpperCase());
-                for (TimeSlotDto timeSlot : entry.getValue()) {
-                    availabilityEntities.add(DoctorAvailabilityEntity.builder()
-                            .doctor(savedDoctor)
-                            .day(day)
-                            .startTime(LocalTime.parse(timeSlot.getStartTime()))
-                            .endTime(LocalTime.parse(timeSlot.getEndTime()))
-                            .build());
+                try {
+                    DayOfWeekEnum day = DayOfWeekEnum.valueOf(entry.getKey().toUpperCase());
+                    for (TimeSlotDto timeSlot : entry.getValue()) {
+                        availabilityEntities.add(DoctorAvailabilityEntity.builder()
+                                .doctor(savedDoctor)
+                                .day(day)
+                                .startTime(LocalTime.parse(timeSlot.getStartTime(), formatter))
+                                .endTime(LocalTime.parse(timeSlot.getEndTime(), formatter))
+                                .build());
+                    }
+                } catch (IllegalArgumentException e) {
+                    throw new RuntimeException("Invalid day of week: " + entry.getKey());
                 }
             }
             availabilityRepository.saveAll(availabilityEntities);
