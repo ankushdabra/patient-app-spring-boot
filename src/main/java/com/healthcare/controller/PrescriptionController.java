@@ -2,7 +2,7 @@ package com.healthcare.controller;
 
 import com.healthcare.dto.ApiResponse;
 import com.healthcare.dto.PrescriptionRequestDto;
-import com.healthcare.entity.PrescriptionEntity;
+import com.healthcare.dto.PrescriptionResponseDto;
 import com.healthcare.service.PrescriptionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -32,13 +32,13 @@ public class PrescriptionController {
 
     @GetMapping
     @PreAuthorize("hasRole('PATIENT')")
-    public ResponseEntity<List<PrescriptionEntity>> getMyPrescriptions() {
+    public ResponseEntity<List<PrescriptionResponseDto>> getMyPrescriptions() {
         return ResponseEntity.ok(prescriptionService.getMyPrescriptions());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('PATIENT')")
-    public ResponseEntity<PrescriptionEntity> getPrescriptionById(@PathVariable UUID id) {
+    public ResponseEntity<PrescriptionResponseDto> getPrescriptionById(@PathVariable UUID id) {
         return ResponseEntity.ok(prescriptionService.getPrescriptionById(id));
     }
 

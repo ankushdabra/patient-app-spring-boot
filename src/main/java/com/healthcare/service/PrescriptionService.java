@@ -1,6 +1,7 @@
 package com.healthcare.service;
 
 import com.healthcare.dto.PrescriptionRequestDto;
+import com.healthcare.dto.PrescriptionResponseDto;
 import com.healthcare.entity.AppointmentEntity;
 import com.healthcare.entity.PatientEntity;
 import com.healthcare.entity.PrescriptionEntity;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -51,16 +53,35 @@ public class PrescriptionService {
     }
 
     @Transactional(readOnly = true)
-    public List<PrescriptionEntity> getMyPrescriptions() {
+    public List<PrescriptionResponseDto> getMyPrescriptions() {
         UserEntity currentUser = userService.getCurrentUser();
-        return prescriptionRepository.findByPatient(patientService.getPatientByUserId(currentUser.getId())
+        List<PrescriptionEntity> prescriptions = prescriptionRepository.findByPatient(patientService.getPatientByUserId(currentUser.getId())
                 .map(PatientEntity::getId)
                 .orElse(null));
+        
+        return prescriptions.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public PrescriptionEntity getPrescriptionById(UUID prescriptionId) {
-        return prescriptionRepository.findById(prescriptionId)
+    public PrescriptionResponseDto getPrescriptionById(UUID prescriptionId) {
+        PrescriptionEntity prescription = prescriptionRepository.findById(prescriptionId)
                 .orElseThrow(() -> new RuntimeException("Prescription not found"));
+        return mapToDto(prescription);
+    }
+
+    private PrescriptionResponseDto mapToDto(PrescriptionEntity entity) {
+        return PrescriptionResponseDto.builder()
+                .id(entity.getId())
+                .medications(entity.getMedications())
+                .instructions(entity.getInstructions())
+                .notes(entity.getNotes())
+                .prescriptionDate(entity.getPrescriptionDate())
+                .appointmentId(entity.getAppointment().getId())
+                .appointmentDate(entity.getAppointment().getAppointmentDate())
+                .doctorName(entity.getAppointment().getDoctor().getUser().getName())
+                .patientName(entity.getAppointment().getPatient().getUser().getName())
+                .build();
     }
 }
