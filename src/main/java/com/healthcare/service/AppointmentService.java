@@ -16,6 +16,7 @@ import com.healthcare.repository.DoctorRepository;
 import com.healthcare.repository.PatientRepository;
 import com.healthcare.util.AvailabilityMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,7 @@ public class AppointmentService {
                 .build());
     }
 
+    @Transactional(readOnly = true)
     public List<AppointmentResponseDto> getAppointments() {
         UserEntity user = userService.getCurrentUser();
 
@@ -79,6 +81,7 @@ public class AppointmentService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public AppointmentResponseDto getAppointmentById(UUID appointmentId) {
         UserEntity user = userService.getCurrentUser();
 
