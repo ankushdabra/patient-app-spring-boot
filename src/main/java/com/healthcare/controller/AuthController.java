@@ -1,6 +1,7 @@
 package com.healthcare.controller;
 
 import com.healthcare.dto.ApiResponse;
+import com.healthcare.dto.DoctorRegistrationRequestDto;
 import com.healthcare.dto.LoginRequestDto;
 import com.healthcare.dto.RegistrationRequestDto;
 import com.healthcare.service.AuthService;
@@ -34,6 +35,12 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequestDto request) {
         Map<String, Object> response = authService.registerUser(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/register-doctor")
+    public ResponseEntity<?> registerDoctor(@Valid @RequestBody DoctorRegistrationRequestDto request) {
+        Map<String, Object> response = authService.registerDoctor(request);
         return ResponseEntity.ok(response);
     }
 

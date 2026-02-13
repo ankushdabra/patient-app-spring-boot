@@ -8,12 +8,9 @@ import com.healthcare.entity.DoctorAvailabilityEntity;
 import com.healthcare.entity.DoctorEntity;
 import com.healthcare.entity.UserEntity;
 import com.healthcare.enums.DayOfWeekEnum;
-import com.healthcare.enums.Role;
 import com.healthcare.repository.DoctorAvailabilityRepository;
 import com.healthcare.repository.DoctorRepository;
-import com.healthcare.repository.UserRepository;
 import com.healthcare.util.AvailabilityMapper;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,17 +28,12 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final DoctorAvailabilityRepository availabilityRepository;
     private final AvailabilityMapper availabilityMapper;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
     public DoctorService(DoctorRepository doctorRepository, DoctorAvailabilityRepository availabilityRepository,
-                         AvailabilityMapper availabilityMapper, UserRepository userRepository,
-                         PasswordEncoder passwordEncoder) {
+                         AvailabilityMapper availabilityMapper) {
         this.doctorRepository = doctorRepository;
         this.availabilityRepository = availabilityRepository;
         this.availabilityMapper = availabilityMapper;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     public List<DoctorResponseDto> getAllDoctors() {
@@ -82,20 +74,9 @@ public class DoctorService {
     }
 
     @Transactional
-    public void createDoctor(DoctorRegistrationRequestDto request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
-        }
-
-        UserEntity savedUser = userRepository.save(UserEntity.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.DOCTOR)
-                .build());
-
+    public void createDoctorProfile(UserEntity user, DoctorRegistrationRequestDto request) {
         DoctorEntity doctor = DoctorEntity.builder()
-                .user(savedUser)
+                .user(user)
                 .name(request.getName())
                 .specialization(request.getSpecialization())
                 .qualification(request.getQualification())

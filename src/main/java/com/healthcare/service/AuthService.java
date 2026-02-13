@@ -1,6 +1,7 @@
 package com.healthcare.service;
 
 import com.healthcare.config.security.JwtUtil;
+import com.healthcare.dto.DoctorRegistrationRequestDto;
 import com.healthcare.dto.LoginRequestDto;
 import com.healthcare.dto.RegistrationRequestDto;
 import com.healthcare.entity.UserEntity;
@@ -26,12 +27,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final PatientService patientService;
+    private final DoctorService doctorService;
 
-    public AuthService(UserRepository userRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder, PatientService patientService) {
+    public AuthService(UserRepository userRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder, PatientService patientService, DoctorService doctorService) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
         this.patientService = patientService;
+        this.doctorService = doctorService;
     }
 
     public String login(LoginRequestDto request) {
@@ -75,6 +78,28 @@ public class AuthService {
             logger.info("Creating patient profile for user ID: {}", savedUser.getId());
             patientService.createPatientFromUser(savedUser, request);
         }
+
+        String token = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole().name());
+
+        return Map.of("user", savedUser, "token", token);
+    }
+
+    @Transactional
+    public Map<String, Object> registerDoctor(@Valid DoctorRegistrationRequestDto request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already registered");
+        }
+
+        UserEntity savedUser = userRepository.save(UserEntity.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.DOCTOR)
+                .build());
+
+        logger.info("Registering new doctor user: {}", savedUser.getEmail());
+
+        doctorService.createDoctorProfile(savedUser, request);
 
         String token = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole().name());
 
