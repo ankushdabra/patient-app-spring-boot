@@ -1,24 +1,23 @@
 package com.healthcare.service;
 
 import com.healthcare.dto.UserProfileDto;
-import com.healthcare.entity.PatientEntity;
 import com.healthcare.entity.UserEntity;
 import com.healthcare.enums.Role;
 import com.healthcare.repository.PatientRepository;
 import com.healthcare.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class ProfileService {
 
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
+    private final DoctorService doctorService;
 
-    public ProfileService(UserRepository userRepository, PatientRepository patientRepository) {
+    public ProfileService(UserRepository userRepository, PatientRepository patientRepository, DoctorService doctorService) {
         this.userRepository = userRepository;
         this.patientRepository = patientRepository;
+        this.doctorService = doctorService;
     }
 
     public UserProfileDto getUserProfile(String email) {
@@ -36,6 +35,8 @@ public class ProfileService {
                     .age(patient.getAge())
                     .gender(patient.getGender())
                     .bloodGroup(patient.getBloodGroup()));
+        } else if (user.getRole() == Role.DOCTOR) {
+            profileBuilder.doctorDetails(doctorService.getDoctorProfile());
         }
 
         return profileBuilder.build();

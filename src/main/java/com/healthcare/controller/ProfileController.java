@@ -20,7 +20,7 @@ public class ProfileController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR')")
     public ResponseEntity<UserProfileDto> getUserProfile(Authentication authentication) {
         return ResponseEntity.ok(profileService.getUserProfile(authentication.getName()));
     }

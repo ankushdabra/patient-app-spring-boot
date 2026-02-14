@@ -39,11 +39,4 @@ public class DoctorController {
         logger.info("Fetching details for doctor ID: {}", doctorId);
         return ResponseEntity.ok(doctorService.getDoctorDetail(doctorId));
     }
-
-    @PreAuthorize("hasRole('DOCTOR')")
-    @GetMapping("/profile")
-    public ResponseEntity<DoctorDetailResponseDto> getDoctorProfile() {
-        logger.info("Fetching doctor profile");
-        return ResponseEntity.ok(doctorService.getDoctorProfile());
-    }
 }
