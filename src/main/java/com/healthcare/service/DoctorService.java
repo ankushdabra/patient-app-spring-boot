@@ -92,7 +92,7 @@ public class DoctorService {
 
         if (request.getAvailability() != null && !request.getAvailability().isEmpty()) {
             List<DoctorAvailabilityEntity> availabilityEntities = new ArrayList<>();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
 
             for (Map.Entry<String, List<TimeSlotDto>> entry : request.getAvailability().entrySet()) {
                 try {

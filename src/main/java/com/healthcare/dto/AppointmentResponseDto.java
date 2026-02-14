@@ -1,5 +1,6 @@
 package com.healthcare.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.healthcare.enums.AppointmentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,7 @@ public class AppointmentResponseDto {
     private DoctorDetailResponseDto doctor;
     private UserProfileDto patient;
     private LocalDate appointmentDate;
+    @JsonFormat(pattern = "hh:mm a")
     private LocalTime appointmentTime;
     private AppointmentStatus status;
 }

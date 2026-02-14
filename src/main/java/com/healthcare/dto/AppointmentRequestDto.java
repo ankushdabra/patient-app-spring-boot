@@ -26,7 +26,7 @@ public class AppointmentRequestDto {
     private LocalDate appointmentDate;
 
     @NotNull
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
-    @Schema(type = "string", example = "10:00")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "hh:mm a")
+    @Schema(type = "string", example = "10:00 AM")
     private LocalTime appointmentTime;
 }

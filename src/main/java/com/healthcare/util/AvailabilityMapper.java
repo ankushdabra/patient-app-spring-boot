@@ -4,6 +4,7 @@ import com.healthcare.dto.TimeSlotDto;
 import com.healthcare.entity.DoctorAvailabilityEntity;
 import org.springframework.stereotype.Component;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,6 +14,8 @@ import java.util.stream.Collectors;
 @Component
 public class AvailabilityMapper {
 
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
+
     public Map<String, List<TimeSlotDto>> map(List<DoctorAvailabilityEntity> availabilityEntities) {
         return availabilityEntities.stream()
                 .sorted(Comparator.comparing(DoctorAvailabilityEntity::getDay))
@@ -21,8 +24,8 @@ public class AvailabilityMapper {
                         LinkedHashMap::new,
                         Collectors.mapping(
                                 entity -> TimeSlotDto.builder()
-                                        .startTime(String.valueOf(entity.getStartTime()))
-                                        .endTime(String.valueOf(entity.getEndTime()))
+                                        .startTime(entity.getStartTime().format(TIME_FORMATTER))
+                                        .endTime(entity.getEndTime().format(TIME_FORMATTER))
                                         .build(),
                                 Collectors.toList()
                         )
