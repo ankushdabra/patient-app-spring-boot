@@ -17,11 +17,13 @@ import com.healthcare.repository.DoctorAvailabilityRepository;
 import com.healthcare.repository.DoctorRepository;
 import com.healthcare.repository.PatientRepository;
 import com.healthcare.util.AvailabilityMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,6 +38,8 @@ public class AppointmentService {
     private final UserService userService;
     private final DoctorAvailabilityRepository doctorAvailabilityRepository;
     private final AvailabilityMapper availabilityMapper;
+    @Value("${app.timezone:Asia/Kolkata}")
+    private String appTimezone;
 
     public AppointmentService(AppointmentRepository repository, PatientRepository patientRepository, DoctorRepository doctorRepository, UserService userService, DoctorAvailabilityRepository doctorAvailabilityRepository, AvailabilityMapper availabilityMapper) {
         this.repository = repository;
@@ -77,8 +81,9 @@ public class AppointmentService {
     public List<AppointmentResponseDto> getAppointments() {
         UserEntity user = userService.getCurrentUser();
         List<AppointmentEntity> appointments;
-        LocalDate currentDate = LocalDate.now();
-        LocalTime currentTime = LocalTime.now();
+        ZoneId zoneId = ZoneId.of(appTimezone);
+        LocalDate currentDate = LocalDate.now(zoneId);
+        LocalTime currentTime = LocalTime.now(zoneId);
 
         if (user.getRole() == Role.DOCTOR) {
             DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
@@ -105,8 +110,9 @@ public class AppointmentService {
         DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
 
-        LocalDate currentDate = LocalDate.now();
-        LocalTime currentTime = LocalTime.now();
+        ZoneId zoneId = ZoneId.of(appTimezone);
+        LocalDate currentDate = LocalDate.now(zoneId);
+        LocalTime currentTime = LocalTime.now(zoneId);
         List<AppointmentEntity> appointments = repository.findTodayAppointmentsForDoctor(doctor.getId(), currentDate, currentTime);
 
         return appointments.stream()
