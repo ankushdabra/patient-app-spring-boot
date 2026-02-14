@@ -4,12 +4,14 @@ import com.healthcare.dto.AppointmentRequestDto;
 import com.healthcare.dto.AppointmentResponseDto;
 import com.healthcare.dto.DoctorDetailResponseDto;
 import com.healthcare.dto.TimeSlotDto;
+import com.healthcare.dto.UserProfileDto;
 import com.healthcare.entity.AppointmentEntity;
 import com.healthcare.entity.DoctorAvailabilityEntity;
 import com.healthcare.entity.DoctorEntity;
 import com.healthcare.entity.PatientEntity;
 import com.healthcare.entity.UserEntity;
 import com.healthcare.enums.AppointmentStatus;
+import com.healthcare.enums.Role;
 import com.healthcare.repository.AppointmentRepository;
 import com.healthcare.repository.DoctorAvailabilityRepository;
 import com.healthcare.repository.DoctorRepository;
@@ -73,12 +75,20 @@ public class AppointmentService {
     public List<AppointmentResponseDto> getAppointments() {
         UserEntity user = userService.getCurrentUser();
 
-        PatientEntity patient = patientRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Patient profile not found"));
+        if (user.getRole() == Role.DOCTOR) {
+            DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
+            return repository.findByDoctorId(doctor.getId()).stream()
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList());
+        } else {
+            PatientEntity patient = patientRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new RuntimeException("Patient profile not found"));
 
-        return repository.findByPatientId(patient.getId()).stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+            return repository.findByPatientId(patient.getId()).stream()
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList());
+        }
     }
 
     @Transactional(readOnly = true)
@@ -89,7 +99,9 @@ public class AppointmentService {
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
         // Security check: Ensure the appointment belongs to the current user
-        if (!appointment.getPatient().getUser().getId().equals(user.getId())) {
+        if (user.getRole() == Role.PATIENT && !appointment.getPatient().getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Access denied: You can only view your own appointments");
+        } else if (user.getRole() == Role.DOCTOR && !appointment.getDoctor().getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Access denied: You can only view your own appointments");
         }
 
@@ -116,9 +128,20 @@ public class AppointmentService {
                 .availability(availabilityMap)
                 .build();
 
+        UserProfileDto patientDto = UserProfileDto.builder()
+                .id(entity.getPatient().getId())
+                .name(entity.getPatient().getUser().getName())
+                .email(entity.getPatient().getUser().getEmail())
+                .role(entity.getPatient().getUser().getRole())
+                .age(entity.getPatient().getAge())
+                .gender(entity.getPatient().getGender())
+                .bloodGroup(entity.getPatient().getBloodGroup())
+                .build();
+
         return AppointmentResponseDto.builder()
                 .id(entity.getId())
                 .doctor(doctorDto)
+                .patient(patientDto)
                 .appointmentDate(entity.getAppointmentDate())
                 .appointmentTime(entity.getAppointmentTime())
                 .status(entity.getStatus())

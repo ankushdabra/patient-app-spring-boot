@@ -34,14 +34,14 @@ public class AppointmentController {
         return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Appointment booked successfully"));
     }
 
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR')")
     @GetMapping
     public ResponseEntity<List<AppointmentResponseDto>> getAppointments() {
         List<AppointmentResponseDto> appointments = appointmentService.getAppointments();
         return ResponseEntity.ok(appointments);
     }
 
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR')")
     @GetMapping("/{id}")
     public ResponseEntity<AppointmentResponseDto> getAppointmentById(@PathVariable UUID id) {
         AppointmentResponseDto appointment = appointmentService.getAppointmentById(id);

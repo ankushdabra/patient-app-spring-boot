@@ -17,6 +17,7 @@ import java.util.UUID;
 public class AppointmentResponseDto {
     private UUID id;
     private DoctorDetailResponseDto doctor;
+    private UserProfileDto patient;
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
     private AppointmentStatus status;
