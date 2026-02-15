@@ -16,5 +16,7 @@ public class UserProfileDto {
     private Integer age;
     private String gender;
     private String bloodGroup;
+    private Double weight;
+    private Double height;
     private DoctorDetailResponseDto doctorDetails;
 }

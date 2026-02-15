@@ -27,5 +27,7 @@ public class RegistrationRequestDto {
     private Integer age;
     private String gender;
     private String bloodGroup;
+    private Double weight;
+    private Double height;
     private String role;
 }

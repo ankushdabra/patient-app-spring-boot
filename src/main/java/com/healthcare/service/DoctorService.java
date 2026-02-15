@@ -4,6 +4,7 @@ import com.healthcare.dto.DoctorDetailResponseDto;
 import com.healthcare.dto.DoctorRegistrationRequestDto;
 import com.healthcare.dto.DoctorResponseDto;
 import com.healthcare.dto.TimeSlotDto;
+import com.healthcare.dto.UpdateProfileRequestDto;
 import com.healthcare.entity.DoctorAvailabilityEntity;
 import com.healthcare.entity.DoctorEntity;
 import com.healthcare.entity.UserEntity;
@@ -109,8 +110,17 @@ public class DoctorService {
         UserEntity user = userService.getCurrentUser();
         DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
-
+        
         return getDoctorDetail(doctor.getId());
+    }
+
+    public BigDecimal getTodayEarnings() {
+        UserEntity user = userService.getCurrentUser();
+        DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
+        
+        BigDecimal earnings = appointmentRepository.calculateEarningsForDoctor(doctor.getId(), LocalDate.now(), AppointmentStatus.COMPLETED);
+        return earnings != null ? earnings : BigDecimal.ZERO;
     }
 
     @Transactional
@@ -140,6 +150,47 @@ public class DoctorService {
                     for (TimeSlotDto timeSlot : entry.getValue()) {
                         availabilityEntities.add(DoctorAvailabilityEntity.builder()
                                 .doctor(savedDoctor)
+                                .day(day)
+                                .startTime(LocalTime.parse(timeSlot.getStartTime(), formatter))
+                                .endTime(LocalTime.parse(timeSlot.getEndTime(), formatter))
+                                .build());
+                    }
+                } catch (IllegalArgumentException e) {
+                    throw new RuntimeException("Invalid day of week: " + entry.getKey());
+                }
+            }
+            availabilityRepository.saveAll(availabilityEntities);
+        }
+    }
+
+    @Transactional
+    public void updateDoctorProfile(UserEntity user, UpdateProfileRequestDto request) {
+        DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
+
+        if (request.getSpecialization() != null) doctor.setSpecialization(request.getSpecialization());
+        if (request.getQualification() != null) doctor.setQualification(request.getQualification());
+        if (request.getExperience() != null) doctor.setExperience(request.getExperience());
+        if (request.getConsultationFee() != null) doctor.setConsultationFee(request.getConsultationFee());
+        if (request.getAbout() != null) doctor.setAbout(request.getAbout());
+        if (request.getClinicAddress() != null) doctor.setClinicAddress(request.getClinicAddress());
+        if (request.getProfileImage() != null) doctor.setProfileImage(request.getProfileImage());
+
+        doctorRepository.save(doctor);
+
+        if (request.getAvailability() != null) {
+            List<DoctorAvailabilityEntity> existingAvailability = availabilityRepository.findByDoctorId(doctor.getId());
+            availabilityRepository.deleteAll(existingAvailability);
+            
+            List<DoctorAvailabilityEntity> availabilityEntities = new ArrayList<>();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
+
+            for (Map.Entry<String, List<TimeSlotDto>> entry : request.getAvailability().entrySet()) {
+                try {
+                    DayOfWeekEnum day = DayOfWeekEnum.valueOf(entry.getKey().toUpperCase());
+                    for (TimeSlotDto timeSlot : entry.getValue()) {
+                        availabilityEntities.add(DoctorAvailabilityEntity.builder()
+                                .doctor(doctor)
                                 .day(day)
                                 .startTime(LocalTime.parse(timeSlot.getStartTime(), formatter))
                                 .endTime(LocalTime.parse(timeSlot.getEndTime(), formatter))

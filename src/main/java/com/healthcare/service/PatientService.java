@@ -24,6 +24,8 @@ public class PatientService {
                 .age(request.getAge())
                 .gender(request.getGender())
                 .bloodGroup(request.getBloodGroup())
+                .weight(request.getWeight())
+                .height(request.getHeight())
                 .build());
     }
 

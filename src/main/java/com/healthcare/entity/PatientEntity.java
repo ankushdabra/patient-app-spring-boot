@@ -41,4 +41,10 @@ public class PatientEntity {
 
     @Column(name = "blood_group")
     private String bloodGroup;
+
+    @Column(name = "weight")
+    private Double weight;
+
+    @Column(name = "height")
+    private Double height;
 }
