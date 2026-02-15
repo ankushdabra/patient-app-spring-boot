@@ -110,7 +110,7 @@ public class DoctorService {
         UserEntity user = userService.getCurrentUser();
         DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
-        
+
         return getDoctorDetail(doctor.getId());
     }
 
@@ -118,7 +118,7 @@ public class DoctorService {
         UserEntity user = userService.getCurrentUser();
         DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
-        
+
         BigDecimal earnings = appointmentRepository.calculateEarningsForDoctor(doctor.getId(), LocalDate.now(), AppointmentStatus.COMPLETED);
         return earnings != null ? earnings : BigDecimal.ZERO;
     }
@@ -141,25 +141,7 @@ public class DoctorService {
         DoctorEntity savedDoctor = doctorRepository.save(doctor);
 
         if (request.getAvailability() != null && !request.getAvailability().isEmpty()) {
-            List<DoctorAvailabilityEntity> availabilityEntities = new ArrayList<>();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
-
-            for (Map.Entry<String, List<TimeSlotDto>> entry : request.getAvailability().entrySet()) {
-                try {
-                    DayOfWeekEnum day = DayOfWeekEnum.valueOf(entry.getKey().toUpperCase());
-                    for (TimeSlotDto timeSlot : entry.getValue()) {
-                        availabilityEntities.add(DoctorAvailabilityEntity.builder()
-                                .doctor(savedDoctor)
-                                .day(day)
-                                .startTime(LocalTime.parse(timeSlot.getStartTime(), formatter))
-                                .endTime(LocalTime.parse(timeSlot.getEndTime(), formatter))
-                                .build());
-                    }
-                } catch (IllegalArgumentException e) {
-                    throw new RuntimeException("Invalid day of week: " + entry.getKey());
-                }
-            }
-            availabilityRepository.saveAll(availabilityEntities);
+            updateAvailability(savedDoctor, request.getAvailability());
         }
     }
 
@@ -168,39 +150,63 @@ public class DoctorService {
         DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
 
-        if (request.getSpecialization() != null) doctor.setSpecialization(request.getSpecialization());
-        if (request.getQualification() != null) doctor.setQualification(request.getQualification());
-        if (request.getExperience() != null) doctor.setExperience(request.getExperience());
-        if (request.getConsultationFee() != null) doctor.setConsultationFee(request.getConsultationFee());
-        if (request.getAbout() != null) doctor.setAbout(request.getAbout());
-        if (request.getClinicAddress() != null) doctor.setClinicAddress(request.getClinicAddress());
-        if (request.getProfileImage() != null) doctor.setProfileImage(request.getProfileImage());
+        if (request.getSpecialization() != null) {
+            doctor.setSpecialization(request.getSpecialization());
+        }
+        if (request.getQualification() != null) {
+            doctor.setQualification(request.getQualification());
+        }
+        if (request.getExperience() != null) {
+            doctor.setExperience(request.getExperience());
+        }
+        if (request.getConsultationFee() != null) {
+            doctor.setConsultationFee(request.getConsultationFee());
+        }
+        if (request.getAbout() != null) {
+            doctor.setAbout(request.getAbout());
+        }
+        if (request.getClinicAddress() != null) {
+            doctor.setClinicAddress(request.getClinicAddress());
+        }
+        if (request.getProfileImage() != null) {
+            doctor.setProfileImage(request.getProfileImage());
+        }
 
         doctorRepository.save(doctor);
 
         if (request.getAvailability() != null) {
             List<DoctorAvailabilityEntity> existingAvailability = availabilityRepository.findByDoctorId(doctor.getId());
             availabilityRepository.deleteAll(existingAvailability);
-            
-            List<DoctorAvailabilityEntity> availabilityEntities = new ArrayList<>();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
+            updateAvailability(doctor, request.getAvailability());
+        }
+    }
 
-            for (Map.Entry<String, List<TimeSlotDto>> entry : request.getAvailability().entrySet()) {
-                try {
-                    DayOfWeekEnum day = DayOfWeekEnum.valueOf(entry.getKey().toUpperCase());
-                    for (TimeSlotDto timeSlot : entry.getValue()) {
-                        availabilityEntities.add(DoctorAvailabilityEntity.builder()
-                                .doctor(doctor)
-                                .day(day)
-                                .startTime(LocalTime.parse(timeSlot.getStartTime(), formatter))
-                                .endTime(LocalTime.parse(timeSlot.getEndTime(), formatter))
-                                .build());
-                    }
-                } catch (IllegalArgumentException e) {
-                    throw new RuntimeException("Invalid day of week: " + entry.getKey());
+    private void updateAvailability(DoctorEntity doctor, Map<String, List<TimeSlotDto>> availability) {
+        List<DoctorAvailabilityEntity> availabilityEntities = new ArrayList<>();
+
+        for (Map.Entry<String, List<TimeSlotDto>> entry : availability.entrySet()) {
+            try {
+                DayOfWeekEnum day = DayOfWeekEnum.valueOf(entry.getKey().toUpperCase());
+                for (TimeSlotDto timeSlot : entry.getValue()) {
+                    availabilityEntities.add(DoctorAvailabilityEntity.builder()
+                            .doctor(doctor)
+                            .day(day)
+                            .startTime(parseTime(timeSlot.getStartTime()))
+                            .endTime(parseTime(timeSlot.getEndTime()))
+                            .build());
                 }
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid day of week: " + entry.getKey());
             }
-            availabilityRepository.saveAll(availabilityEntities);
+        }
+        availabilityRepository.saveAll(availabilityEntities);
+    }
+
+    private LocalTime parseTime(String time) {
+        try {
+            return LocalTime.parse(time, DateTimeFormatter.ofPattern("hh:mm a"));
+        } catch (Exception e) {
+            return LocalTime.parse(time, DateTimeFormatter.ofPattern("HH:mm"));
         }
     }
 }
