@@ -6,6 +6,7 @@ import com.healthcare.entity.AppointmentEntity;
 import com.healthcare.entity.PatientEntity;
 import com.healthcare.entity.PrescriptionEntity;
 import com.healthcare.entity.UserEntity;
+import com.healthcare.enums.AppointmentStatus;
 import com.healthcare.repository.AppointmentRepository;
 import com.healthcare.repository.PrescriptionRepository;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,9 @@ public class PrescriptionService {
                 .build();
 
         prescriptionRepository.save(prescription);
+
+        appointment.setStatus(AppointmentStatus.COMPLETED);
+        appointmentRepository.save(appointment);
     }
 
     @Transactional(readOnly = true)
