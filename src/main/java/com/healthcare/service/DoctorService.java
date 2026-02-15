@@ -40,6 +40,7 @@ public class DoctorService {
     }
 
     public List<DoctorResponseDto> getAllDoctors() {
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
         return doctorRepository.findAll()
                 .stream()
                 .map(doctor -> {
@@ -47,7 +48,7 @@ public class DoctorService {
                     String nextAvailable = availabilityEntities.stream()
                             .sorted(Comparator.comparing(DoctorAvailabilityEntity::getDay)
                                     .thenComparing(DoctorAvailabilityEntity::getStartTime))
-                            .map(availability -> availability.getDay().name() + " " + availability.getStartTime())
+                            .map(availability -> formatDayOfWeek(availability.getDay()) + ", " + availability.getStartTime().format(timeFormatter))
                             .findFirst()
                             .orElse("Not Available");
 
@@ -63,6 +64,18 @@ public class DoctorService {
                             .build();
                 })
                 .toList();
+    }
+
+    private String formatDayOfWeek(DayOfWeekEnum day) {
+        return switch (day) {
+            case MON -> "Monday";
+            case TUE -> "Tuesday";
+            case WED -> "Wednesday";
+            case THU -> "Thursday";
+            case FRI -> "Friday";
+            case SAT -> "Saturday";
+            case SUN -> "Sunday";
+        };
     }
 
     public DoctorDetailResponseDto getDoctorDetail(UUID doctorId) {
