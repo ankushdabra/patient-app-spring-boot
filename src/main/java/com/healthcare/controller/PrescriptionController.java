@@ -24,7 +24,7 @@ public class PrescriptionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<ApiResponse> createPrescription(@Valid @RequestBody PrescriptionRequestDto request) {
         prescriptionService.createPrescription(request);
         return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Prescription created successfully"));
