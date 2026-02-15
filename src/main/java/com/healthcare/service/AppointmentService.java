@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,12 +56,7 @@ public class AppointmentService {
     public void bookAppointment(AppointmentRequestDto request) {
         UserEntity user = userService.getCurrentUser();
 
-        // 🔒 Prevent double booking
-        boolean slotTaken = repository.existsByDoctorIdAndAppointmentDateAndAppointmentTime(request.getDoctorId(),
-                request.getAppointmentDate(),
-                request.getAppointmentTime());
-
-        if (slotTaken) {
+        if (repository.existsByDoctorIdAndAppointmentDateAndAppointmentTime(request.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime())) {
             throw new RuntimeException("Slot already booked");
         }
 
@@ -82,23 +78,28 @@ public class AppointmentService {
     @Transactional(readOnly = true)
     public List<AppointmentResponseDto> getAppointments() {
         UserEntity user = userService.getCurrentUser();
-        List<AppointmentEntity> appointments;
         ZoneId zoneId = ZoneId.of(appTimezone);
         LocalDate currentDate = LocalDate.now(zoneId);
         LocalTime currentTime = LocalTime.now(zoneId);
 
+        List<AppointmentEntity> appointments;
         if (user.getRole() == Role.DOCTOR) {
             DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
                     .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
-            appointments = repository.findUpcomingAppointmentsForDoctor(doctor.getId(), currentDate, currentTime);
+            appointments = repository.findUpcomingAppointmentsForDoctor(doctor.getId(), currentDate, currentTime, AppointmentStatus.BOOKED);
         } else {
             PatientEntity patient = patientRepository.findByUserId(user.getId())
                     .orElseThrow(() -> new RuntimeException("Patient profile not found"));
-            appointments = repository.findUpcomingAppointmentsForPatient(patient.getId(), currentDate, currentTime);
+            appointments = repository.findUpcomingAppointmentsForPatient(patient.getId(), currentDate, currentTime, AppointmentStatus.BOOKED);
         }
 
+        List<UUID> doctorIds = appointments.stream().map(a -> a.getDoctor().getId()).distinct().collect(Collectors.toList());
+        Map<UUID, List<DoctorAvailabilityEntity>> availabilitiesByDoctor = doctorAvailabilityRepository.findByDoctorIdIn(doctorIds)
+                .stream()
+                .collect(Collectors.groupingBy(da -> da.getDoctor().getId()));
+
         return appointments.stream()
-                .map(this::mapToDto)
+                .map(appointment -> mapToDtoWithAvailability(appointment, availabilitiesByDoctor.getOrDefault(appointment.getDoctor().getId(), Collections.emptyList())))
                 .collect(Collectors.toList());
     }
 
@@ -115,13 +116,19 @@ public class AppointmentService {
         ZoneId zoneId = ZoneId.of(appTimezone);
         LocalDate currentDate = LocalDate.now(zoneId);
         LocalTime currentTime = LocalTime.now(zoneId);
-        List<AppointmentEntity> appointments = repository.findTodayAppointmentsForDoctor(doctor.getId(), currentDate, currentTime);
+
+        List<AppointmentEntity> appointments = repository.findTodayAppointmentsForDoctor(doctor.getId(), currentDate, currentTime, AppointmentStatus.BOOKED);
+        
+        List<UUID> doctorIds = appointments.stream().map(a -> a.getDoctor().getId()).distinct().collect(Collectors.toList());
+        Map<UUID, List<DoctorAvailabilityEntity>> availabilitiesByDoctor = doctorAvailabilityRepository.findByDoctorIdIn(doctorIds)
+                .stream()
+                .collect(Collectors.groupingBy(da -> da.getDoctor().getId()));
 
         List<AppointmentResponseDto> appointmentDtos = appointments.stream()
-                .map(this::mapToDto)
+                .map(appointment -> mapToDtoWithAvailability(appointment, availabilitiesByDoctor.getOrDefault(appointment.getDoctor().getId(), Collections.emptyList())))
                 .collect(Collectors.toList());
 
-        BigDecimal totalEarnings = repository.calculateEarningsForDoctor(doctor.getId(), currentDate, AppointmentStatus.COMPLETED);
+        BigDecimal totalEarnings = repository.calculateTotalEarningsByDoctorAndDateAndStatus(doctor.getId(), currentDate, AppointmentStatus.COMPLETED);
         if (totalEarnings == null) {
             totalEarnings = BigDecimal.ZERO;
         }
@@ -135,24 +142,20 @@ public class AppointmentService {
     @Transactional(readOnly = true)
     public AppointmentResponseDto getAppointmentById(UUID appointmentId) {
         UserEntity user = userService.getCurrentUser();
-
         AppointmentEntity appointment = repository.findById(appointmentId)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        // Security check: Ensure the appointment belongs to the current user
-        if (user.getRole() == Role.PATIENT && !appointment.getPatient().getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Access denied: You can only view your own appointments");
-        } else if (user.getRole() == Role.DOCTOR && !appointment.getDoctor().getUser().getId().equals(user.getId())) {
+        if ((user.getRole() == Role.PATIENT && !appointment.getPatient().getUser().getId().equals(user.getId())) ||
+                (user.getRole() == Role.DOCTOR && !appointment.getDoctor().getUser().getId().equals(user.getId()))) {
             throw new RuntimeException("Access denied: You can only view your own appointments");
         }
 
-        return mapToDto(appointment);
+        List<DoctorAvailabilityEntity> availabilities = doctorAvailabilityRepository.findByDoctorId(appointment.getDoctor().getId());
+        return mapToDtoWithAvailability(appointment, availabilities);
     }
 
-    private AppointmentResponseDto mapToDto(AppointmentEntity entity) {
+    private AppointmentResponseDto mapToDtoWithAvailability(AppointmentEntity entity, List<DoctorAvailabilityEntity> availabilityEntities) {
         DoctorEntity doctor = entity.getDoctor();
-        List<DoctorAvailabilityEntity> availabilityEntities = doctorAvailabilityRepository.findByDoctorId(doctor.getId());
-
         Map<String, List<TimeSlotDto>> availabilityMap = availabilityMapper.map(availabilityEntities);
 
         DoctorDetailResponseDto doctorDto = DoctorDetailResponseDto.builder()

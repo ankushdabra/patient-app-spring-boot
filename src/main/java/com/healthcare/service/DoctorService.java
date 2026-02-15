@@ -8,17 +8,16 @@ import com.healthcare.dto.UpdateProfileRequestDto;
 import com.healthcare.entity.DoctorAvailabilityEntity;
 import com.healthcare.entity.DoctorEntity;
 import com.healthcare.entity.UserEntity;
-import com.healthcare.enums.AppointmentStatus;
 import com.healthcare.enums.DayOfWeekEnum;
-import com.healthcare.repository.AppointmentRepository;
 import com.healthcare.repository.DoctorAvailabilityRepository;
 import com.healthcare.repository.DoctorRepository;
 import com.healthcare.util.AvailabilityMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -26,50 +25,53 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class DoctorService {
 
+    private static final DateTimeFormatter TIME_FORMATTER_AM_PM = DateTimeFormatter.ofPattern("hh:mm a");
+    private static final DateTimeFormatter TIME_FORMATTER_24H = DateTimeFormatter.ofPattern("HH:mm");
+
     private final DoctorRepository doctorRepository;
     private final DoctorAvailabilityRepository availabilityRepository;
     private final AvailabilityMapper availabilityMapper;
-    private final UserService userService;
-    private final AppointmentRepository appointmentRepository;
 
     public DoctorService(DoctorRepository doctorRepository, DoctorAvailabilityRepository availabilityRepository,
-                         AvailabilityMapper availabilityMapper, UserService userService, AppointmentRepository appointmentRepository) {
+                         AvailabilityMapper availabilityMapper) {
         this.doctorRepository = doctorRepository;
         this.availabilityRepository = availabilityRepository;
         this.availabilityMapper = availabilityMapper;
-        this.userService = userService;
-        this.appointmentRepository = appointmentRepository;
     }
 
-    public List<DoctorResponseDto> getAllDoctors() {
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
-        return doctorRepository.findAll()
-                .stream()
-                .map(doctor -> {
-                    List<DoctorAvailabilityEntity> availabilityEntities = availabilityRepository.findByDoctorId(doctor.getId());
-                    String nextAvailable = availabilityEntities.stream()
-                            .sorted(Comparator.comparing(DoctorAvailabilityEntity::getDay)
-                                    .thenComparing(DoctorAvailabilityEntity::getStartTime))
-                            .map(availability -> formatDayOfWeek(availability.getDay()) + ", " + availability.getStartTime().format(timeFormatter))
-                            .findFirst()
-                            .orElse("Not Available");
+    public Page<DoctorResponseDto> getAllDoctors(Pageable pageable) {
+        Page<DoctorEntity> doctorsPage = doctorRepository.findAll(pageable);
+        List<UUID> doctorIds = doctorsPage.getContent().stream().map(DoctorEntity::getId).collect(Collectors.toList());
 
-                    return DoctorResponseDto.builder()
-                            .id(doctor.getId())
-                            .name(doctor.getUser().getName())
-                            .specialization(doctor.getSpecialization())
-                            .experience(doctor.getExperience())
-                            .consultationFee(doctor.getConsultationFee())
-                            .rating(doctor.getRating())
-                            .profileImage(doctor.getProfileImage())
-                            .nextAvailable(nextAvailable)
-                            .build();
-                })
-                .toList();
+        Map<UUID, List<DoctorAvailabilityEntity>> availabilityMap = availabilityRepository.findByDoctorIdIn(doctorIds)
+                .stream()
+                .collect(Collectors.groupingBy(availability -> availability.getDoctor().getId()));
+
+        return doctorsPage.map(doctor -> {
+            List<DoctorAvailabilityEntity> availabilityEntities = availabilityMap.getOrDefault(doctor.getId(), new ArrayList<>());
+            String nextAvailable = availabilityEntities.stream()
+                    .sorted(Comparator.comparing(DoctorAvailabilityEntity::getDay)
+                            .thenComparing(DoctorAvailabilityEntity::getStartTime))
+                    .map(availability -> formatDayOfWeek(availability.getDay()) + ", " + availability.getStartTime().format(TIME_FORMATTER_AM_PM))
+                    .findFirst()
+                    .orElse("Not Available");
+
+            return DoctorResponseDto.builder()
+                    .id(doctor.getId())
+                    .name(doctor.getUser().getName())
+                    .specialization(doctor.getSpecialization())
+                    .experience(doctor.getExperience())
+                    .consultationFee(doctor.getConsultationFee())
+                    .rating(doctor.getRating())
+                    .profileImage(doctor.getProfileImage())
+                    .nextAvailable(nextAvailable)
+                    .build();
+        });
     }
 
     private String formatDayOfWeek(DayOfWeekEnum day) {
@@ -104,23 +106,6 @@ public class DoctorService {
                 .profileImage(doctor.getProfileImage())
                 .availability(availabilityMap)
                 .build();
-    }
-
-    public DoctorDetailResponseDto getDoctorProfile() {
-        UserEntity user = userService.getCurrentUser();
-        DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
-
-        return getDoctorDetail(doctor.getId());
-    }
-
-    public BigDecimal getTodayEarnings() {
-        UserEntity user = userService.getCurrentUser();
-        DoctorEntity doctor = doctorRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
-
-        BigDecimal earnings = appointmentRepository.calculateEarningsForDoctor(doctor.getId(), LocalDate.now(), AppointmentStatus.COMPLETED);
-        return earnings != null ? earnings : BigDecimal.ZERO;
     }
 
     @Transactional
@@ -175,8 +160,7 @@ public class DoctorService {
         doctorRepository.save(doctor);
 
         if (request.getAvailability() != null) {
-            List<DoctorAvailabilityEntity> existingAvailability = availabilityRepository.findByDoctorId(doctor.getId());
-            availabilityRepository.deleteAll(existingAvailability);
+            availabilityRepository.deleteByDoctorId(doctor.getId());
             updateAvailability(doctor, request.getAvailability());
         }
     }
@@ -204,9 +188,9 @@ public class DoctorService {
 
     private LocalTime parseTime(String time) {
         try {
-            return LocalTime.parse(time, DateTimeFormatter.ofPattern("hh:mm a"));
+            return LocalTime.parse(time, TIME_FORMATTER_AM_PM);
         } catch (Exception e) {
-            return LocalTime.parse(time, DateTimeFormatter.ofPattern("HH:mm"));
+            return LocalTime.parse(time, TIME_FORMATTER_24H);
         }
     }
 }

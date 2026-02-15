@@ -17,16 +17,15 @@ import java.util.UUID;
 public interface AppointmentRepository extends JpaRepository<AppointmentEntity, UUID> {
     boolean existsByDoctorIdAndAppointmentDateAndAppointmentTime(UUID doctorId, LocalDate appointmentDate, LocalTime appointmentTime);
 
-    @Query("SELECT a FROM AppointmentEntity a WHERE a.patient.id = :patientId AND (a.appointmentDate > :currentDate OR (a.appointmentDate = :currentDate AND a.appointmentTime >= :currentTime)) AND a.status = com.healthcare.enums.AppointmentStatus.BOOKED ORDER BY a.appointmentDate ASC, a.appointmentTime ASC")
-    List<AppointmentEntity> findUpcomingAppointmentsForPatient(@Param("patientId") UUID patientId, @Param("currentDate") LocalDate currentDate, @Param("currentTime") LocalTime currentTime);
+    @Query("SELECT a FROM AppointmentEntity a WHERE a.patient.id = :patientId AND (a.appointmentDate > :currentDate OR (a.appointmentDate = :currentDate AND a.appointmentTime >= :currentTime)) AND a.status = :status ORDER BY a.appointmentDate ASC, a.appointmentTime ASC")
+    List<AppointmentEntity> findUpcomingAppointmentsForPatient(@Param("patientId") UUID patientId, @Param("currentDate") LocalDate currentDate, @Param("currentTime") LocalTime currentTime, @Param("status") AppointmentStatus status);
 
-    @Query("SELECT a FROM AppointmentEntity a WHERE a.doctor.id = :doctorId AND (a.appointmentDate > :currentDate OR (a.appointmentDate = :currentDate AND a.appointmentTime >= :currentTime)) AND a.status = com.healthcare.enums.AppointmentStatus.BOOKED ORDER BY a.appointmentDate ASC, a.appointmentTime ASC")
-    List<AppointmentEntity> findUpcomingAppointmentsForDoctor(@Param("doctorId") UUID doctorId, @Param("currentDate") LocalDate currentDate, @Param("currentTime") LocalTime currentTime);
+    @Query("SELECT a FROM AppointmentEntity a WHERE a.doctor.id = :doctorId AND (a.appointmentDate > :currentDate OR (a.appointmentDate = :currentDate AND a.appointmentTime >= :currentTime)) AND a.status = :status ORDER BY a.appointmentDate ASC, a.appointmentTime ASC")
+    List<AppointmentEntity> findUpcomingAppointmentsForDoctor(@Param("doctorId") UUID doctorId, @Param("currentDate") LocalDate currentDate, @Param("currentTime") LocalTime currentTime, @Param("status") AppointmentStatus status);
 
-    @Query("SELECT a FROM AppointmentEntity a WHERE a.doctor.id = :doctorId AND a.appointmentDate = :currentDate AND a.appointmentTime >= :currentTime AND a.status = com.healthcare.enums.AppointmentStatus.BOOKED ORDER BY a.appointmentDate ASC, a.appointmentTime ASC")
-    List<AppointmentEntity> findTodayAppointmentsForDoctor(@Param("doctorId") UUID doctorId, @Param("currentDate") LocalDate currentDate, @Param("currentTime") LocalTime currentTime);
+    @Query("SELECT a FROM AppointmentEntity a WHERE a.doctor.id = :doctorId AND a.appointmentDate = :currentDate AND a.appointmentTime >= :currentTime AND a.status = :status ORDER BY a.appointmentDate ASC, a.appointmentTime ASC")
+    List<AppointmentEntity> findTodayAppointmentsForDoctor(@Param("doctorId") UUID doctorId, @Param("currentDate") LocalDate currentDate, @Param("currentTime") LocalTime currentTime, @Param("status") AppointmentStatus status);
 
-    @Query("SELECT SUM(d.consultationFee) FROM AppointmentEntity a JOIN a.doctor d WHERE a.doctor.id = :doctorId AND a.appointmentDate = :date AND a.status = :status")
-    BigDecimal calculateEarningsForDoctor(@Param("doctorId") UUID doctorId, @Param("date") LocalDate date, @Param("status") AppointmentStatus status);
-
+    @Query("SELECT SUM(a.doctor.consultationFee) FROM AppointmentEntity a WHERE a.doctor.id = :doctorId AND a.appointmentDate = :date AND a.status = :status")
+    BigDecimal calculateTotalEarningsByDoctorAndDateAndStatus(@Param("doctorId") UUID doctorId, @Param("date") LocalDate date, @Param("status") AppointmentStatus status);
 }

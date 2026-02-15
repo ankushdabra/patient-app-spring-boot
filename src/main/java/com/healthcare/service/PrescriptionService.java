@@ -70,13 +70,13 @@ public class PrescriptionService {
         List<PrescriptionEntity> prescriptions;
 
         if (currentUser.getRole() == Role.PATIENT) {
-            prescriptions = prescriptionRepository.findByPatient(patientService.getPatientByUserId(currentUser.getId())
+            prescriptions = prescriptionRepository.findByPatientWithDetails(patientService.getPatientByUserId(currentUser.getId())
                     .map(PatientEntity::getId)
                     .orElse(null));
         } else if (currentUser.getRole() == Role.DOCTOR) {
             DoctorEntity doctor = doctorRepository.findByUserId(currentUser.getId())
                     .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
-            prescriptions = prescriptionRepository.findByDoctor(doctor.getId());
+            prescriptions = prescriptionRepository.findByDoctorWithDetails(doctor.getId());
         } else {
             prescriptions = Collections.emptyList();
         }
@@ -88,7 +88,7 @@ public class PrescriptionService {
 
     @Transactional(readOnly = true)
     public PrescriptionResponseDto getPrescriptionById(UUID prescriptionId) {
-        PrescriptionEntity prescription = prescriptionRepository.findById(prescriptionId)
+        PrescriptionEntity prescription = prescriptionRepository.findByIdWithDetails(prescriptionId)
                 .orElseThrow(() -> new RuntimeException("Prescription not found"));
         return mapToDto(prescription);
     }
