@@ -15,9 +15,9 @@ public interface PrescriptionRepository extends JpaRepository<PrescriptionEntity
     @Query("SELECT p FROM PrescriptionEntity p JOIN FETCH p.appointment a JOIN FETCH a.doctor d JOIN FETCH d.user JOIN FETCH a.patient pt JOIN FETCH pt.user WHERE p.id = :prescriptionId")
     Optional<PrescriptionEntity> findByIdWithDetails(@Param("prescriptionId") UUID prescriptionId);
 
-    @Query("SELECT p FROM PrescriptionEntity p JOIN FETCH p.appointment a JOIN FETCH a.doctor d JOIN FETCH d.user JOIN FETCH a.patient pt JOIN FETCH pt.user WHERE p.patient = :patientId")
+    @Query("SELECT p FROM PrescriptionEntity p JOIN FETCH p.appointment a JOIN FETCH a.doctor d JOIN FETCH d.user JOIN FETCH a.patient pt JOIN FETCH pt.user WHERE p.patient = :patientId ORDER BY p.prescriptionDate DESC")
     List<PrescriptionEntity> findByPatientWithDetails(@Param("patientId") UUID patientId);
 
-    @Query("SELECT p FROM PrescriptionEntity p JOIN FETCH p.appointment a JOIN FETCH a.doctor d JOIN FETCH d.user JOIN FETCH a.patient pt JOIN FETCH pt.user WHERE p.doctor = :doctorId")
+    @Query("SELECT p FROM PrescriptionEntity p JOIN FETCH p.appointment a JOIN FETCH a.doctor d JOIN FETCH d.user JOIN FETCH a.patient pt JOIN FETCH pt.user WHERE p.doctor = :doctorId ORDER BY p.prescriptionDate DESC")
     List<PrescriptionEntity> findByDoctorWithDetails(@Param("doctorId") UUID doctorId);
 }
